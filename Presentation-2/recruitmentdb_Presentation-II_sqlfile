@@ -1,0 +1,175 @@
+-- DBMS Course Project: Recruitment and Applicant Tracking
+-- Student: Sirigiri Sruti
+-- Roll No: 25WU0102266
+-- Database: recruitmentdb
+
+CREATE DATABASE IF NOT EXISTS recruitmentdb;
+USE recruitmentdb;
+
+-- =========================
+-- TABLE CREATION
+-- =========================
+
+CREATE TABLE IF NOT EXISTS department (
+    department_id INT PRIMARY KEY,
+    department_name VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS recruiter (
+    recruiter_id INT PRIMARY KEY,
+    recruiter_name VARCHAR(100) NOT NULL,
+    email VARCHAR(120) UNIQUE,
+    phone VARCHAR(20)
+);
+
+CREATE TABLE IF NOT EXISTS applicant (
+    applicant_id INT PRIMARY KEY,
+    applicant_name VARCHAR(80) NOT NULL,
+    email VARCHAR(120) UNIQUE,
+    phone VARCHAR(20),
+    qualification VARCHAR(50),
+    experience_years INT CHECK (experience_years >= 0)
+);
+
+CREATE TABLE IF NOT EXISTS job (
+    job_id INT PRIMARY KEY,
+    job_title VARCHAR(100) NOT NULL,
+    department_id INT,
+    recruiter_id INT,
+    openings INT,
+    salary DECIMAL(10,2),
+    job_status VARCHAR(20),
+    FOREIGN KEY (department_id) REFERENCES department(department_id),
+    FOREIGN KEY (recruiter_id) REFERENCES recruiter(recruiter_id)
+);
+
+CREATE TABLE IF NOT EXISTS application (
+    application_id INT PRIMARY KEY,
+    applicant_id INT,
+    job_id INT,
+    application_date DATE,
+    application_status VARCHAR(20) DEFAULT 'Pending',
+    FOREIGN KEY (applicant_id) REFERENCES applicant(applicant_id),
+    FOREIGN KEY (job_id) REFERENCES job(job_id)
+);
+
+CREATE TABLE IF NOT EXISTS interview (
+    interview_id INT PRIMARY KEY,
+    application_id INT,
+    interview_date DATE,
+    interview_mode VARCHAR(20),
+    interview_result VARCHAR(20),
+    FOREIGN KEY (application_id) REFERENCES application(application_id)
+);
+
+CREATE TABLE IF NOT EXISTS selection (
+    selection_id INT PRIMARY KEY,
+    application_id INT,
+    selection_date DATE,
+    decision VARCHAR(20),
+    FOREIGN KEY (application_id) REFERENCES application(application_id)
+);
+
+-- Application tracking table present in the working database.
+CREATE TABLE IF NOT EXISTS application_tracking (
+    application_id INT,
+    applicant_name VARCHAR(80),
+    job_title VARCHAR(100),
+    application_date DATE,
+    application_status VARCHAR(20)
+);
+
+-- =========================
+-- SAMPLE DATA
+-- =========================
+
+INSERT INTO department (department_id, department_name) VALUES
+(1, 'Computer Science'),
+(3, 'Finance'),
+(2, 'Human Resources'),
+(4, 'Marketing');
+
+INSERT INTO recruiter (recruiter_id, recruiter_name, email, phone) VALUES
+(101, 'Ananya Rao', 'ananya@company.com', '9876543210'),
+(102, 'Rahul Sharma', 'rahul@company.com', '9876543211'),
+(103, 'Priya Mehta', 'priya@company.com', '9876543212');
+
+INSERT INTO applicant
+(applicant_id, applicant_name, email, phone, qualification, experience_years) VALUES
+(301, 'Aarav Kumar', 'aarav@gmail.com', '9000000001', 'B.Tech', 2),
+(302, 'Diya Sharma', 'diya@gmail.com', '9000000002', 'B.Tech', 1),
+(303, 'Rohan Verma', 'rohan@gmail.com', '9000000003', 'MCA', 3),
+(304, 'Sneha Reddy', 'sneha@gmail.com', '9000000004', 'B.Tech', 0),
+(305, 'Arjun Patel', 'arjun@gmail.com', '9000000005', 'MBA', 4);
+
+INSERT INTO job
+(job_id, job_title, department_id, recruiter_id, openings, salary, job_status) VALUES
+(201, 'AI Engineer', 1, 101, 3, 800000.00, 'Open'),
+(202, 'Software Developer', 1, 102, 5, 700000.00, 'Open'),
+(203, 'HR Executive', 2, 103, 2, 500000.00, 'Open'),
+(204, 'Financial Analyst', 3, 101, 2, 600000.00, 'Open'),
+(205, 'Marketing Executive', 4, 102, 4, 450000.00, 'Open');
+
+INSERT INTO application
+(application_id, applicant_id, job_id, application_date, application_status) VALUES
+(401, 301, 201, '2026-09-01', 'Shortlisted'),
+(402, 302, 201, '2026-09-02', 'Selected'),
+(403, 303, 202, '2026-09-03', 'Pending'),
+(404, 304, 203, '2026-09-04', 'Shortlisted'),
+(405, 305, 204, '2026-09-05', 'Pending'),
+(406, 301, 202, '2026-09-06', 'Pending'),
+(407, 304, 205, '2026-09-18', 'Pending');
+
+INSERT INTO interview
+(interview_id, application_id, interview_date, interview_mode, interview_result) VALUES
+(501, 402, '2026-09-10', 'Online', 'Passed'),
+(502, 404, '2026-09-11', 'Offline', 'Passed'),
+(503, 403, '2026-09-12', 'Online', 'Pending');
+
+INSERT INTO selection
+(selection_id, application_id, selection_date, decision) VALUES
+(601, 402, '2026-09-15', 'Selected');
+
+-- Application tracking data shown in the working database.
+INSERT INTO application_tracking
+(application_id, applicant_name, job_title, application_date, application_status) VALUES
+(401, 'Aarav Kumar', 'AI Engineer', '2026-09-01', 'Shortlisted'),
+(406, 'Aarav Kumar', 'Software Developer', '2026-09-06', 'Pending'),
+(402, 'Diya Sharma', 'AI Engineer', '2026-09-02', 'Selected'),
+(403, 'Rohan Verma', 'Software Developer', '2026-09-03', 'Pending'),
+(404, 'Sneha Reddy', 'HR Executive', '2026-09-04', 'Shortlisted'),
+(407, 'Sneha Reddy', 'Marketing Executive', '2026-09-18', 'Pending'),
+(405, 'Arjun Patel', 'Financial Analyst', '2026-09-05', 'Pending');
+
+-- =========================
+-- SELECT / QUERY COMMANDS
+-- =========================
+
+-- 1. Display applicants with their applied job titles.
+-- (Uses job_title, which matches the working database.)
+SELECT a.applicant_name, j.job_title
+FROM applicant a
+JOIN application ap ON a.applicant_id = ap.applicant_id
+JOIN job j ON ap.job_id = j.job_id;
+
+-- 2. Count applications by application status.
+SELECT application_status, COUNT(*) AS total
+FROM application
+GROUP BY application_status;
+
+-- 3. Find jobs with more than one applicant.
+SELECT j.job_title, COUNT(ap.applicant_id) AS total
+FROM job j
+JOIN application ap ON j.job_id = ap.job_id
+GROUP BY j.job_id, j.job_title
+HAVING COUNT(ap.applicant_id) > 1;
+
+-- Additional useful SELECT commands used during verification:
+SELECT * FROM department;
+SELECT * FROM recruiter;
+SELECT * FROM applicant;
+SELECT * FROM job;
+SELECT * FROM application;
+SELECT * FROM application_tracking;
+SELECT * FROM interview;
+SELECT * FROM selection;
